@@ -6,3 +6,5 @@
 **Day2:** Wrote a 1D tiled matmul kernel
 
 **Day3:** Oversimplified 2D tiled matmul kernel
+
+**Day4:** 2D matmul kernel with CPU verification and great memory management
