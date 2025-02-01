@@ -8,3 +8,5 @@
 **Day3:** Oversimplified 2D tiled matmul kernel
 
 **Day4:** 2D matmul kernel with CPU verification and great memory management
+
+**Day5:** 3D matmul tiling!
