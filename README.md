@@ -12,3 +12,5 @@
 **Day 5:** 3D matmul tiling!
 
 **Day 6:** Softmax flashattention online
+
+**Day 7:** Layer Normalization
