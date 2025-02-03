@@ -1,12 +1,14 @@
 # 100-daysofcuda
  Kernels Written for 100 days of CUDA Challenge
 
-**Day1:** Wrote a Naive Matmul kernel
+**Day 1:** Wrote a Naive Matmul kernel
 
-**Day2:** Wrote a 1D tiled matmul kernel
+**Day 2:** Wrote a 1D tiled matmul kernel
 
-**Day3:** Oversimplified 2D tiled matmul kernel
+**Day 3:** Oversimplified 2D tiled matmul kernel
 
-**Day4:** 2D matmul kernel with CPU verification and great memory management
+**Day 4:** 2D matmul kernel with CPU verification and great memory management
 
-**Day5:** 3D matmul tiling!
+**Day 5:** 3D matmul tiling!
+
+**Day 6:** Softmax flashattention online
