@@ -14,3 +14,5 @@
 **Day 6:** Softmax flashattention online
 
 **Day 7:** Layer Normalization
+
+**Day 8:** Better layer normalization with lots of nice modifications
