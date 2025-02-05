@@ -16,3 +16,7 @@
 **Day 7:** Layer Normalization
 
 **Day 8:** Better layer normalization with lots of nice modifications
+
+**Day 9:** Implimented a 2D tiled convlutional kernel
+
+
