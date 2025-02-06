@@ -20,3 +20,4 @@
 **Day 9:** Implimented a 2D tiled convlutional kernel
 
 
+**Day 10:** Implimented Vectorized matmul !! Got first Batch
