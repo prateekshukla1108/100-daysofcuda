@@ -21,3 +21,7 @@
 
 
 **Day 10:** Implimented Vectorized matmul !! Got first Batch
+
+**Day 11:** Implimented merge sort algorithm using CUDA
+
+
