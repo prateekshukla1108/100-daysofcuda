@@ -24,4 +24,4 @@
 
 **Day 11:** Implimented merge sort algorithm using CUDA
 
-
+**Day 12:** Wrote flash attention with backpropagation
