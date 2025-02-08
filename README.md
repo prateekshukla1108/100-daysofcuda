@@ -25,3 +25,6 @@
 **Day 11:** Implimented merge sort algorithm using CUDA
 
 **Day 12:** Wrote flash attention with backpropagation
+
+**Day 13** Learned about GNNs and wrote Kernel to impliment a layer of GNNs
+
