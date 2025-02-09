@@ -26,5 +26,7 @@
 
 **Day 12:** Wrote flash attention with backpropagation
 
-**Day 13** Learned about GNNs and wrote Kernel to impliment a layer of GNNs
+**Day 13:** Learned about GNNs and wrote Kernel to impliment a layer of GNNs
+
+**Day 14:** Wrote N body simulation kernel inspired by 1y33
 
