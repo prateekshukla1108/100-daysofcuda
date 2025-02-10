@@ -30,3 +30,4 @@
 
 **Day 14:** Wrote N body simulation kernel inspired by 1y33
 
+**Day 15:** Random weight selection kernel for neural networks
