@@ -1,56 +1,98 @@
-Below is an updated version of the “toy‐version” CUDA transformer layer—with smaller dimensions and added visual cues and sample input printing. This version uses a smaller sequence length and model dimension (so you can see printed matrices) and includes an ASCII‐diagram in the comments to help you follow the data flow.
+Below is a detailed, step‐by–step flowchart that more accurately illustrates the data flow and tensor dimensions for the “toy–version” transformer kernel. In this example, we use a simplified setup with:
 
-In our example we set:
+- **Batch size:** 1  
+- **Sequence length:** SEQ_LEN  
+- **Model dimension:** D_MODEL  
+- **Attention heads:** HEADS (each with dimension D_HEAD = D_MODEL/HEADS)  
+- **Feed–Forward Network (FFN) hidden dimension:** FFN_DIM
 
-Batch size: 1
-Sequence length: 4
-Model dimension: 8
-Attention heads: 2 (so each head has dimension 4)
-FFN dimension: 16
+Assume the input tensor is shaped as [SEQ_LEN × D_MODEL] (we ignore batch for clarity). The chart below shows each stage along with the corresponding shapes and operations:
 
+```
+┌─────────────────────────────────────────┐
+│             Input X                     │  
+│         Shape: [SEQ_LEN, D_MODEL]       │  
+└─────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
+│      Linear Projections (Wq, Wk, Wv)      │  
+│                                         │  
+│   Q = X · Wq      (Shape: [SEQ_LEN, D_MODEL])   │  
+│   K = X · Wk      (Shape: [SEQ_LEN, D_MODEL])   │  
+│   V = X · Wv      (Shape: [SEQ_LEN, D_MODEL])   │  
+└─────────────────────────────────────────┘
+                  │
+                  ▼
+┌───────────────────────────────────────────────┐
+│         Multi–Head Self–Attention             │  
+│     (Loop over each head: h = 0, 1, …, HEADS–1)  │  
+│                                               │  
+│   For head h:                                 │  
+│     • Slice:                                  │  
+│         Qₕ = Q[:, h·D_HEAD : (h+1)·D_HEAD]      │  
+│         Kₕ = K[:, h·D_HEAD : (h+1)·D_HEAD]      │  
+│         Vₕ = V[:, h·D_HEAD : (h+1)·D_HEAD]      │  
+│                                               │  
+│     • Compute attention scores:               │  
+│         scores = (Qₕ · Kₕᵀ) / √D_HEAD           │  
+│         Shape: [SEQ_LEN, SEQ_LEN]               │  
+│                                               │  
+│     • Softmax(scores)                          │  
+│                                               │  
+│     • Compute head output:                     │  
+│         head_out = scores · Vₕ                  │  
+│         Shape: [SEQ_LEN, D_HEAD]               │  
+└───────────────────────────────────────────────┘
+                  │
+                  ▼
+┌───────────────────────────────────────────────┐
+│      Concatenate Head Outputs               │  
+│   OutAttn = [head_out₀, head_out₁, …, head_out₍HEADS–1₎]  │  
+│   Shape: [SEQ_LEN, D_MODEL]                   │  
+└───────────────────────────────────────────────┘
+                  │
+                  ▼
+┌───────────────────────────────────────────────┐
+│          Final Linear Projection              │  
+│   Out = OutAttn · Wo                           │  
+│   Shape: [SEQ_LEN, D_MODEL]                    │  
+└───────────────────────────────────────────────┘
+                  │
+                  ▼
+┌───────────────────────────────────────────────┐
+│  Residual Connection & LayerNorm (First Stage)│  
+│   Y₁ = LN( X + Out )                          │  
+│   Shape: [SEQ_LEN, D_MODEL]                    │  
+└───────────────────────────────────────────────┘
+                  │
+                  ▼
+┌───────────────────────────────────────────────┐
+│      Feed–Forward Network (FFN)               │  
+│                                               │  
+│   FFN₁ = ReLU( Y₁ · W₁ )                       │  
+│          Shape: [SEQ_LEN, FFN_DIM]            │  
+│   FFN  = FFN₁ · W₂                            │  
+│          Shape: [SEQ_LEN, D_MODEL]            │  
+└───────────────────────────────────────────────┘
+                  │
+                  ▼
+┌───────────────────────────────────────────────┐
+│  Residual Connection & LayerNorm (Second Stage)│  
+│   Output = LN( Y₁ + FFN )                      │  
+│   Shape: [SEQ_LEN, D_MODEL]                    │  
+└───────────────────────────────────────────────┘
+```
 
+### Additional Notes:
 
+- **Linear Projections:**  
+  Each of the three projections (Wq, Wk, Wv) transforms the [SEQ_LEN × D_MODEL] input into a new [SEQ_LEN × D_MODEL] space. Later, the model “splits” these into multiple heads.
 
-                      ┌────────────────────────────┐
-                      │         Input X            │  [SEQ_LEN x D_MODEL]
-                      └────────────────────────────┘
-                                │
-                                ▼
-                 ┌────────────────────────────────┐
-                 │ Linear Projections:            │
-                 │   Q = X * Wq,  K = X * Wk,       │
-                 │   V = X * Wv                   │
-                 └────────────────────────────────┘
-                                │
-                                ▼
-                 ┌────────────────────────────────┐
-                 │  Multi-Head Self-Attention     │
-                 │ For each head h (split Q, K,V):│
-                 │   scores = (Q_h * K_h^T)/√d_h   │
-                 │   softmax(scores)              │
-                 │   head_out = scores * V_h      │
-                 └────────────────────────────────┘
-                                │ (Concatenate heads)
-                                ▼
-                 ┌────────────────────────────────┐
-                 │ Final Projection: Out = concat(heads) * Wo │
-                 └────────────────────────────────┘
-                                │
-                                ▼
-                 ┌────────────────────────────────┐
-                 │ Residual + LayerNorm           │
-                 │ Y1 = LN( X + Out )             │
-                 └────────────────────────────────┘
-                                │
-                                ▼
-                 ┌────────────────────────────────┐
-                 │ Feed-Forward Network (FFN):    │
-                 │   FFN = ReLU(Y1 * W1) * W2       │
-                 └────────────────────────────────┘
-                                │
-                                ▼
-                 ┌────────────────────────────────┐
-                 │ Residual + LayerNorm           │
-                 │ Output = LN( Y1 + FFN )         │
-                 └────────────────────────────────┘
+- **Multi–Head Attention Details:**  
+  For each head, the kernel extracts a slice of size [SEQ_LEN × D_HEAD]. It then computes the attention scores using a transposed matrix multiplication (Qₕ multiplied by the transpose of Kₕ), scales them, and applies softmax before computing the weighted sum with Vₕ.
 
+- **Residual & LayerNorm:**  
+  Two residual connections combined with layer normalization are used: once after the attention block (producing Y₁) and again after the FFN block to produce the final output.
+
+This detailed chart should serve as a clear and accurate visual guide to the operations and dimensions within the provided CUDA transformer kernel.
