@@ -15,73 +15,73 @@ Assume the input tensor is shaped as [SEQ_LEN × D_MODEL] (we ignore batch for c
 └─────────────────────────────────────────┘
                   │
                   ▼
-┌─────────────────────────────────────────┐
-│      Linear Projections (Wq, Wk, Wv)      │  
-│                                         │  
-│   Q = X · Wq      (Shape: [SEQ_LEN, D_MODEL])   │  
-│   K = X · Wk      (Shape: [SEQ_LEN, D_MODEL])   │  
-│   V = X · Wv      (Shape: [SEQ_LEN, D_MODEL])   │  
-└─────────────────────────────────────────┘
+┌───────────────────────────────────────────────┐
+│      Linear Projections (Wq, Wk, Wv)          │  
+│                                               │  
+│   Q = X · Wq      (Shape: [SEQ_LEN, D_MODEL]) │  
+│   K = X · Wk      (Shape: [SEQ_LEN, D_MODEL]) │  
+│   V = X · Wv      (Shape: [SEQ_LEN, D_MODEL]) │  
+└───────────────────────────────────────────────┘
                   │
                   ▼
-┌───────────────────────────────────────────────┐
-│         Multi–Head Self–Attention             │  
+┌──────────────────────────────────────────────────┐
+│         Multi–Head Self–Attention                │  
 │     (Loop over each head: h = 0, 1, …, HEADS–1)  │  
-│                                               │  
-│   For head h:                                 │  
-│     • Slice:                                  │  
-│         Qₕ = Q[:, h·D_HEAD : (h+1)·D_HEAD]      │  
-│         Kₕ = K[:, h·D_HEAD : (h+1)·D_HEAD]      │  
-│         Vₕ = V[:, h·D_HEAD : (h+1)·D_HEAD]      │  
-│                                               │  
-│     • Compute attention scores:               │  
-│         scores = (Qₕ · Kₕᵀ) / √D_HEAD           │  
-│         Shape: [SEQ_LEN, SEQ_LEN]               │  
-│                                               │  
-│     • Softmax(scores)                          │  
-│                                               │  
-│     • Compute head output:                     │  
-│         head_out = scores · Vₕ                  │  
-│         Shape: [SEQ_LEN, D_HEAD]               │  
-└───────────────────────────────────────────────┘
+│                                                  │  
+│   For head h:                                    │  
+│     • Slice:                                     │  
+│         Qₕ = Q[:, h·D_HEAD : (h+1)·D_HEAD]       │  
+│         Kₕ = K[:, h·D_HEAD : (h+1)·D_HEAD]       │  
+│         Vₕ = V[:, h·D_HEAD : (h+1)·D_HEAD]       │  
+│                                                  │  
+│     • Compute attention scores:                  │  
+│         scores = (Qₕ · Kₕᵀ) / √D_HEAD            │  
+│         Shape: [SEQ_LEN, SEQ_LEN]                │  
+│                                                  │  
+│     • Softmax(scores)                            │  
+│                                                  │  
+│     • Compute head output:                       │  
+│         head_out = scores · Vₕ                   │  
+│         Shape: [SEQ_LEN, D_HEAD]                 │  
+└──────────────────────────────────────────────────┘
                   │
                   ▼
-┌───────────────────────────────────────────────┐
-│      Concatenate Head Outputs               │  
+┌───────────────────────────────────────────────────────────┐
+│      Concatenate Head Outputs                             │  
 │   OutAttn = [head_out₀, head_out₁, …, head_out₍HEADS–1₎]  │  
-│   Shape: [SEQ_LEN, D_MODEL]                   │  
-└───────────────────────────────────────────────┘
+│   Shape: [SEQ_LEN, D_MODEL]                               │  
+└───────────────────────────────────────────────────────────┘
                   │
                   ▼
 ┌───────────────────────────────────────────────┐
 │          Final Linear Projection              │  
-│   Out = OutAttn · Wo                           │  
-│   Shape: [SEQ_LEN, D_MODEL]                    │  
+│   Out = OutAttn · Wo                          │  
+│   Shape: [SEQ_LEN, D_MODEL]                   │  
 └───────────────────────────────────────────────┘
                   │
                   ▼
 ┌───────────────────────────────────────────────┐
 │  Residual Connection & LayerNorm (First Stage)│  
 │   Y₁ = LN( X + Out )                          │  
-│   Shape: [SEQ_LEN, D_MODEL]                    │  
+│   Shape: [SEQ_LEN, D_MODEL]                   │  
 └───────────────────────────────────────────────┘
                   │
                   ▼
-┌───────────────────────────────────────────────┐
-│      Feed–Forward Network (FFN)               │  
-│                                               │  
+┌────────────────────────────────────────────────┐
+│      Feed–Forward Network (FFN)                │  
+│                                                │  
 │   FFN₁ = ReLU( Y₁ · W₁ )                       │  
-│          Shape: [SEQ_LEN, FFN_DIM]            │  
-│   FFN  = FFN₁ · W₂                            │  
-│          Shape: [SEQ_LEN, D_MODEL]            │  
-└───────────────────────────────────────────────┘
+│          Shape: [SEQ_LEN, FFN_DIM]             │  
+│   FFN  = FFN₁ · W₂                             │  
+│          Shape: [SEQ_LEN, D_MODEL]             │  
+└────────────────────────────────────────────────┘
                   │
                   ▼
-┌───────────────────────────────────────────────┐
+┌────────────────────────────────────────────────┐
 │  Residual Connection & LayerNorm (Second Stage)│  
 │   Output = LN( Y₁ + FFN )                      │  
 │   Shape: [SEQ_LEN, D_MODEL]                    │  
-└───────────────────────────────────────────────┘
+└────────────────────────────────────────────────┘
 ```
 
 ### Additional Notes:
