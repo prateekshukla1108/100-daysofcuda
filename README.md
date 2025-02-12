@@ -33,3 +33,5 @@
 **Day 15:** Random weight selection kernel for neural networks
 
 **Day 16:** Full Fledged Transformer model
+
+**Day 17:** Optimized the transformer by adding tiled matmul and shared memory in softmax !
