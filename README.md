@@ -35,3 +35,7 @@
 **Day 16:** Full Fledged Transformer model
 
 **Day 17:** Optimized the transformer by adding tiled matmul and shared memory in softmax !
+
+**Day 18:** More Optimizations like loop unrolling and tiled transposed matrix B and Warp level reductions in Softmax
+
+
