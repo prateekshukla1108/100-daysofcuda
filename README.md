@@ -38,4 +38,4 @@
 
 **Day 18:** More Optimizations like loop unrolling and tiled transposed matrix B and Warp level reductions in Softmax
 
-
+**Day 19:** Learned and applied FP16, Fusion kernels, Online softmax, registers etc
