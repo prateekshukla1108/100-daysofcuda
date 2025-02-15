@@ -38,4 +38,7 @@
 
 **Day 18:** More Optimizations like loop unrolling and tiled transposed matrix B and Warp level reductions in Softmax
 
-**Day 19:** Learned and applied FP16, Fusion kernels, Online softmax, registers etc
+**Day 19:** Learned and integrated FP16, Fusion kernels, Online softmax, registers etc in the transformer kernel
+
+**Day 20:** Wrote a full neural network with forward pass, SGD, backpropagation
+
