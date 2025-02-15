@@ -4,14 +4,17 @@
 #include <math.h>
 #include <float.h>
 
-#define CUDA_CHECK(call) do { \
-    cudaError_t err = call;   \
-    if(err != cudaSuccess){   \
-        fprintf(stderr, "CUDA error in %s at %s:%d: %s\n", __FUNCTION__, __FILE__, __LINE__, cudaGetErrorString(err)); \
-        exit(EXIT_FAILURE);   \
-    }                         \
+#define CUDA_CHECK(call) do {                                \
+    cudaError_t err = call;                                  \
+    if(err != cudaSuccess){                                  \
+        fprintf(stderr, "CUDA error in %s at %s:%d: %s\n",    \
+                __FUNCTION__, __FILE__, __LINE__,            \
+                cudaGetErrorString(err));                    \
+        exit(EXIT_FAILURE);                                  \
+    }                                                        \
 } while(0)
 
+  
 __global__ void compute_gradients(
     const float* __restrict__ input,
     const float* __restrict__ target,
@@ -29,97 +32,102 @@ __global__ void compute_gradients(
     float* tmp_buffer, int tmp_stride)
 {
     int sample_idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if(sample_idx < batch_size) {
-        const float* sample = input + sample_idx * input_dim;
-        const float* sample_target = target + sample_idx * output_dim;
-        float* base = tmp_buffer + sample_idx * tmp_stride;
-        float* z1 = base;                              
-        float* a1 = z1 + hidden1_dim;                  
-        float* d1 = a1 + hidden1_dim;                  
-        float* z2 = d1 + hidden1_dim;                  
-        float* a2 = z2 + hidden2_dim;                  
-        float* d2 = a2 + hidden2_dim;                  
-        float* z3 = d2 + hidden2_dim;                  
-        float* out = z3 + output_dim;                  
-        float* d3 = out + output_dim;                  
+    if(sample_idx >= batch_size) return;
+    
+    float* base = tmp_buffer + sample_idx * tmp_stride;
+    float* z1   = base;                              
+    float* a1   = z1   + hidden1_dim;                
+    float* d1   = a1   + hidden1_dim;                
+    float* z2   = d1   + hidden1_dim;                
+    float* a2   = z2   + hidden2_dim;                
+    float* d2   = a2   + hidden2_dim;                
+    float* z3   = d2   + hidden2_dim;                
+    float* outp = z3   + output_dim;                     float* d3   = outp + output_dim;                 
 
-        for (int i = 0; i < hidden1_dim; i++) {
-            float sum = 0.0f;
-            for (int j = 0; j < input_dim; j++) {
-                sum += sample[j] * w1[j * hidden1_dim + i];
-            }
-            sum += b1[i];
-            z1[i] = sum;
-            a1[i] = (sum > 0.0f) ? sum : 0.0f;
-        }
-        for (int i = 0; i < hidden2_dim; i++) {
-            float sum = 0.0f;
-            for (int j = 0; j < hidden1_dim; j++) {
-                sum += a1[j] * w2[j * hidden2_dim + i];
-            }
-            sum += b2[i];
-            z2[i] = sum;
-            a2[i] = (sum > 0.0f) ? sum : 0.0f;
-        }
-        float max_val = -FLT_MAX;
-        for (int i = 0; i < output_dim; i++) {
-            float sum = 0.0f;
-            for (int j = 0; j < hidden2_dim; j++) {
-                sum += a2[j] * w3[j * output_dim + i];
-            }
-            sum += b3[i];
-            z3[i] = sum;
-            if (sum > max_val) max_val = sum;
-        }
-        float exp_sum = 0.0f;
-        for (int i = 0; i < output_dim; i++) {
-            float e = expf(z3[i] - max_val);
-            out[i] = e;
-            exp_sum += e;
-        }
-        for (int i = 0; i < output_dim; i++) {
-            out[i] /= exp_sum;
-        }
+    const float* sample = input + sample_idx * input_dim;
+    const float* sample_target = target + sample_idx * output_dim;
 
-        for (int i = 0; i < output_dim; i++) {
-            d3[i] = out[i] - sample_target[i];
+
+    for (int i = 0; i < hidden1_dim; i++) {
+        float sum = 0.0f;
+        for (int j = 0; j < input_dim; j++) {
+            sum += sample[j] * w1[j * hidden1_dim + i];
         }
-        for (int i = 0; i < output_dim; i++) {
-            atomicAdd(&d_grad_b3[i], d3[i]);
-            for (int j = 0; j < hidden2_dim; j++) {
-                float grad = a2[j] * d3[i];
-                atomicAdd(&d_grad_w3[j * output_dim + i], grad);
-            }
+        sum += b1[i];
+        z1[i] = sum;
+        a1[i] = (sum > 0.0f) ? sum : 0.0f;
+    }
+    
+    for (int i = 0; i < hidden2_dim; i++) {
+        float sum = 0.0f;
+        for (int j = 0; j < hidden1_dim; j++) {
+            sum += a1[j] * w2[j * hidden2_dim + i];
         }
-        for (int i = 0; i < hidden2_dim; i++) {
-            float error_sum = 0.0f;
-            for (int j = 0; j < output_dim; j++) {
-                error_sum += w3[i * output_dim + j] * d3[j];
-            }
-            float relu_deriv = (z2[i] > 0.0f) ? 1.0f : 0.0f;
-            d2[i] = error_sum * relu_deriv;
+        sum += b2[i];
+        z2[i] = sum;
+        a2[i] = (sum > 0.0f) ? sum : 0.0f;
+    }
+    
+    float max_val = -FLT_MAX;
+    for (int i = 0; i < output_dim; i++) {
+        float sum = 0.0f;
+        for (int j = 0; j < hidden2_dim; j++) {
+            sum += a2[j] * w3[j * output_dim + i];
         }
-        for (int i = 0; i < hidden2_dim; i++) {
-            atomicAdd(&d_grad_b2[i], d2[i]);
-            for (int j = 0; j < hidden1_dim; j++) {
-                float grad = a1[j] * d2[i];
-                atomicAdd(&d_grad_w2[j * hidden2_dim + i], grad);
-            }
+        sum += b3[i];
+        z3[i] = sum;
+        if (sum > max_val) max_val = sum;
+    }
+    float exp_sum = 0.0f;
+    for (int i = 0; i < output_dim; i++) {
+        float e = expf(z3[i] - max_val);
+        outp[i] = e;
+        exp_sum += e;
+    }
+    for (int i = 0; i < output_dim; i++) {
+        outp[i] /= exp_sum;
+    }
+    
+    for (int i = 0; i < output_dim; i++) {
+        d3[i] = outp[i] - sample_target[i];
+    }
+    
+    for (int i = 0; i < output_dim; i++) {
+        atomicAdd(&d_grad_b3[i], d3[i]);
+        for (int j = 0; j < hidden2_dim; j++) {
+            atomicAdd(&d_grad_w3[j * output_dim + i], a2[j] * d3[i]);
         }
-        for (int i = 0; i < hidden1_dim; i++) {
-            float error_sum = 0.0f;
-            for (int j = 0; j < hidden2_dim; j++) {
-                error_sum += w2[i * hidden2_dim + j] * d2[j];
-            }
-            float relu_deriv = (z1[i] > 0.0f) ? 1.0f : 0.0f;
-            d1[i] = error_sum * relu_deriv;
+    }
+    
+    for (int i = 0; i < hidden2_dim; i++) {
+        float error_sum = 0.0f;
+        for (int k = 0; k < output_dim; k++) {
+            error_sum += w3[i * output_dim + k] * d3[k];
         }
-        for (int i = 0; i < hidden1_dim; i++) {
-            atomicAdd(&d_grad_b1[i], d1[i]);
-            for (int j = 0; j < input_dim; j++) {
-                float grad = sample[j] * d1[i];
-                atomicAdd(&d_grad_w1[j * hidden1_dim + i], grad);
-            }
+        float relu_deriv = (z2[i] > 0.0f) ? 1.0f : 0.0f;
+        d2[i] = error_sum * relu_deriv;
+    }
+    
+    for (int i = 0; i < hidden2_dim; i++) {
+        atomicAdd(&d_grad_b2[i], d2[i]);
+        for (int j = 0; j < hidden1_dim; j++) {
+            atomicAdd(&d_grad_w2[j * hidden2_dim + i], a1[j] * d2[i]);
+        }
+    }
+    
+    for (int i = 0; i < hidden1_dim; i++) {
+        float error_sum = 0.0f;
+        for (int k = 0; k < hidden2_dim; k++) {
+            error_sum += w2[i * hidden2_dim + k] * d2[k];
+        }
+        float relu_deriv = (z1[i] > 0.0f) ? 1.0f : 0.0f;
+        d1[i] = error_sum * relu_deriv;
+    }
+    
+    for (int i = 0; i < hidden1_dim; i++) {
+        atomicAdd(&d_grad_b1[i], d1[i]);
+        for (int j = 0; j < input_dim; j++) {
+            atomicAdd(&d_grad_w1[j * hidden1_dim + i], sample[j] * d1[i]);
         }
     }
 }
@@ -283,7 +291,7 @@ int main(){
         CUDA_CHECK(cudaMemset(d_grad_b2, 0, b2_size));
         CUDA_CHECK(cudaMemset(d_grad_w3, 0, w3_size));
         CUDA_CHECK(cudaMemset(d_grad_b3, 0, b3_size));
-
+        
         compute_gradients<<<gridSize, blockSize>>>(d_input, d_target,
             d_w1, d_b1, d_w2, d_b2, d_w3, d_b3,
             d_grad_w1, d_grad_b1, d_grad_w2, d_grad_b2, d_grad_w3, d_grad_b3,
@@ -294,14 +302,24 @@ int main(){
         int numThreads = 128, numBlocks;
         numBlocks = (input_dim * hidden1_dim + numThreads - 1) / numThreads;
         update_weights<<<numBlocks, numThreads>>>(d_w1, d_grad_w1, input_dim * hidden1_dim, learning_rate, batch_size);
+        CUDA_CHECK(cudaDeviceSynchronize());
+        
         numBlocks = (hidden1_dim + numThreads - 1) / numThreads;
         update_weights<<<numBlocks, numThreads>>>(d_b1, d_grad_b1, hidden1_dim, learning_rate, batch_size);
+        CUDA_CHECK(cudaDeviceSynchronize());
+        
         numBlocks = (hidden1_dim * hidden2_dim + numThreads - 1) / numThreads;
         update_weights<<<numBlocks, numThreads>>>(d_w2, d_grad_w2, hidden1_dim * hidden2_dim, learning_rate, batch_size);
+        CUDA_CHECK(cudaDeviceSynchronize());
+        
         numBlocks = (hidden2_dim + numThreads - 1) / numThreads;
         update_weights<<<numBlocks, numThreads>>>(d_b2, d_grad_b2, hidden2_dim, learning_rate, batch_size);
+        CUDA_CHECK(cudaDeviceSynchronize());
+        
         numBlocks = (hidden2_dim * output_dim + numThreads - 1) / numThreads;
         update_weights<<<numBlocks, numThreads>>>(d_w3, d_grad_w3, hidden2_dim * output_dim, learning_rate, batch_size);
+        CUDA_CHECK(cudaDeviceSynchronize());
+        
         numBlocks = (output_dim + numThreads - 1) / numThreads;
         update_weights<<<numBlocks, numThreads>>>(d_b3, d_grad_b3, output_dim, learning_rate, batch_size);
         CUDA_CHECK(cudaDeviceSynchronize());
@@ -314,7 +332,6 @@ int main(){
     CUDA_CHECK(cudaMemcpy(h_w3, d_w3, w3_size, cudaMemcpyDeviceToHost));
     CUDA_CHECK(cudaMemcpy(h_b3, d_b3, b3_size, cudaMemcpyDeviceToHost));
 
-    // Visualize several samples: show input, target, forward-pass prediction, and predicted class.
     printf("Visualizations:\n");
     for(int sample = 0; sample < 5; sample++){
         printf("Sample %d:\n", sample);
@@ -374,3 +391,4 @@ int main(){
 
     return 0;
 }
+
