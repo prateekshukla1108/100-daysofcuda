@@ -42,3 +42,5 @@
 
 **Day 20:** Wrote a full neural network with forward pass, SGD, backpropagation
 
+**Day 21:** Tried writing full CNN For mnist but failed lots lots and lots of time
+
