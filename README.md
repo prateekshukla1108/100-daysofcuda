@@ -44,3 +44,5 @@
 
 **Day 21:** Tried writing full CNN For mnist but failed lots lots and lots of time
 
+**Day 22:** Shifted focus from Implimenting everything from scratch to cuDNN. Reimplimented the CNN Mnist project in cuDNN and managed to compile it with some logical errors still there
+
