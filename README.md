@@ -46,3 +46,5 @@
 
 **Day 22:** Shifted focus from Implimenting everything from scratch to cuDNN. Reimplimented the CNN Mnist project in cuDNN and managed to compile it with some logical errors still there
 
+**Day 23:** Again refocused on Implimenting everything from scratch as cuDNN version was pretty difficult to maintain. Did huge progress by integrating everything in one file and almost reaching excellence in doing it
+
