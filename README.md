@@ -48,3 +48,5 @@
 
 **Day 23:** Again refocused on Implimenting everything from scratch as cuDNN version was pretty difficult to maintain. Did huge progress by integrating everything in one file and almost reaching excellence in doing it
 
+**Day 24:** Reimagined the whole code and after 10 hours of tinkering around with nested loops wrote the perfect CUDA CNN kernel for MNIST
+
