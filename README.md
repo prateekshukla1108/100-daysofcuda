@@ -50,3 +50,5 @@
 
 **Day 24:** Reimagined the whole code and after 10 hours of tinkering around with nested loops wrote the perfect CUDA CNN kernel for MNIST
 
+**Day 25:** Implimented Native sparse attention Paper by deepseek for an nvidia H100 GPU
+
