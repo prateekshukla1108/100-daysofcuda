@@ -52,3 +52,4 @@
 
 **Day 25:** Implimented Native sparse attention Paper by deepseek for an nvidia H100 GPU
 
+**Day 26:** Tokenizer in CUDA
