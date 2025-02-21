@@ -1,0 +1,40 @@
+.version 8.0          // PTX version
+.target sm_80         // Target GPU architecture (e.g., Ampere)
+.address_size 64      // 64-bit addressing
+
+.entry add_kernel (   // Kernel entry point
+    .param .u64 a,    // Input: pointer to array a
+    .param .u64 b,    // Input: pointer to array b
+    .param .u64 c     // Output: pointer to array c
+)
+{
+    .reg .u32 %tid;            // Register for thread ID
+    .reg .u64 %offset;         // Register for byte offset
+    .reg .u64 %aPtr, %bPtr, %cPtr; // Registers for base addresses
+    .reg .f32 %x, %y, %z;       // Registers for float values
+
+    // Get thread ID in the x-dimension and compute byte offset (4 bytes per float)
+    mov.u32 %tid, %tid.x;
+    mul.wide.u32 %offset, %tid, 4;
+
+    // Process array 'a'
+    ld.param.u64 %aPtr, [a];            // Load base address of array a
+    add.u64 %aPtr, %aPtr, %offset;       // Add computed offset
+    ld.global.f32 %x, [%aPtr];          // Load a[%tid]
+
+    // Process array 'b'
+    ld.param.u64 %bPtr, [b];            // Load base address of array b
+    add.u64 %bPtr, %bPtr, %offset;       // Add computed offset
+    ld.global.f32 %y, [%bPtr];          // Load b[%tid]
+
+    // Add the two float values
+    add.f32 %z, %x, %y;
+
+    // Store result into array 'c'
+    ld.param.u64 %cPtr, [c];            // Load base address of array c
+    add.u64 %cPtr, %cPtr, %offset;       // Add computed offset
+    st.global.f32 [%cPtr], %z;          // Store result in c[%tid]
+
+    ret;
+}
+
