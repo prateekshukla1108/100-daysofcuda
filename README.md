@@ -53,3 +53,6 @@
 **Day 25:** Implimented Native sparse attention Paper by deepseek for an nvidia H100 GPU
 
 **Day 26:** Tokenizer in CUDA
+
+**Day 27:** Learned how to do an operation for 1000s of GPUs using MPI and NCCL
+
