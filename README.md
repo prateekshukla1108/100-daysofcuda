@@ -56,3 +56,4 @@
 
 **Day 27:** Learned how to do an operation for 1000s of GPUs using MPI and NCCL
 
+**Day 28:** Wrote kernel for Full LLM (don't know how if it works perfect)
