@@ -61,3 +61,5 @@
 **Day 29:** LLM Kernel code review
 
 **Day 30:** Rethought the whole LLM kernel and fit that into a single file
+
+**Day 30:** Debugged the LLM kernel a lot
