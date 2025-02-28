@@ -62,4 +62,6 @@
 
 **Day 30:** Rethought the whole LLM kernel and fit that into a single file
 
-**Day 30:** Debugged the LLM kernel a lot
+**Day 31:** Debugged the LLM kernel a lot
+
+**Day 32:** Triton Day 1 - Vectoradd
