@@ -65,3 +65,7 @@
 **Day 31:** Debugged the LLM kernel a lot
 
 **Day 32:** Triton Day 1 - Vectoradd
+
+**Day 33:** CUDA Q-Learning Implementation for a Grid World Environment
+
+**Day 34:** CUDA-based agent-resource simulation 
