@@ -68,4 +68,6 @@
 
 **Day 33:** CUDA Q-Learning Implementation for a Grid World Environment
 
-**Day 34:** CUDA-based agent-resource simulation 
+**Day 34:** CUDA-based agent-resource simulation
+
+**Day 35:** Writing CUDA Kernels for AI generated Algorithms. Impliments backpropagation-free neural network architecture
